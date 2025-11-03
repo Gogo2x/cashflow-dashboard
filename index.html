@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cash Flow Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            animation: fadeIn 0.8s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            animation: slideDown 1s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--card-color), var(--card-color-dark));
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+        }
+        
+        .metric-card.outstanding { --card-color: #667eea; --card-color-dark: #4c63d2; }
+        .metric-card.overdue { --card-color: #f56565; --card-color-dark: #e53e3e; }
+        .metric-card.count { --card-color: #48bb78; --card-color-dark: #38a169; }
+        .metric-card.avg { --card-color: #ed8936; --card-color-dark: #dd6b20; }
+        
+        .metric-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .metric-label {
+            font-size: 0.95rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .metric-value {
+            font-size: 2.8rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+        
+        .outstanding .metric-value { color: #667eea; }
+        .overdue .metric-value { color: #f56565; }
+        .count .metric-value { color: #48bb78; }
+        .avg .metric-value { color: #ed8936; }
+        
+        .forecast-section {
+            background: white;
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+            margin-bottom: 40px;
+            animation: slideUp 1s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: #333;
+            font-weight: 700;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+        }
+        
+        .forecast-item {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba220 100%);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .forecast-item:hover {
+            transform: scale(1.08);
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        .forecast-period {
+            font-size: 1rem;
+            color: #555;
+            margin-bottom: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .forecast-amount {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .data-table-section {
+            background: white;
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+            margin-bottom: 40px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        th {
+            color: white;
+            padding: 18px 20px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1.2px;
+        }
+        
+        th:first-child { border-radius: 10px 0 0 0; }
+        th:last-child { border-radius: 0 10px 0 0; }
+        
+        td {
+            padding: 18px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            font-size: 0.95rem;
+        }
+        
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+        
+        tbody tr:hover {
+            background: linear-gradient(90deg, #667eea08, #764ba208);
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 50px;
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+        
+        .footer p {
+            margin: 8px 0;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background: #48bb7820;
+            color: #38a169;
+        }
+        
+        .badge-warning {
+            background: #ed893620;
+            color: #dd6b20;
+        }
+        
+        .badge-danger {
+            background: #f5656520;
+            color: #e53e3e;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .forecast-grid { grid-template-columns: 1fr; }
+            .section-title { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Cash Flow Dashboard</h1>
+            <p>Real-time Financial Intelligence & Strategic Insights</p>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card outstanding">
+                <span class="metric-icon">💵</span>
+                <div class="metric-label">Total Outstanding</div>
+                <div class="metric-value">$128,701</div>
+            </div>
+            
+            <div class="metric-card overdue">
+                <span class="metric-icon">⚠️</span>
+                <div class="metric-label">Total Overdue</div>
+                <div class="metric-value">$8,946</div>
+            </div>
+            
+            <div class="metric-card count">
+                <span class="metric-icon">📄</span>
+                <div class="metric-label">Unpaid Invoices</div>
+                <div class="metric-value">219</div>
+            </div>
+            
+            <div class="metric-card avg">
+                <span class="metric-icon">⏱️</span>
+                <div class="metric-label">Avg Days Overdue</div>
+                <div class="metric-value">12 days</div>
+            </div>
+        </div>
+        
+        <div class="forecast-section">
+            <div class="section-title">
+                <span>📈</span>
+                Cash Flow Forecast
+            </div>
+            <div class="forecast-grid">
+                <div class="forecast-item">
+                    <div class="forecast-period">Next 30 Days</div>
+                    <div class="forecast-amount">$49,703</div>
+                </div>
+                <div class="forecast-item">
+                    <div class="forecast-period">Next 60 Days</div>
+                    <div class="forecast-amount">$56,101</div>
+                </div>
+                <div class="forecast-item">
+                    <div class="forecast-period">Next 90 Days</div>
+                    <div class="forecast-amount">$56,101</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-table-section">
+            <div class="section-title">
+                <span>📊</span>
+                Recent Forecast History
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Total Outstanding</th>
+                        <th>Overdue Amount</th>
+                        <th>30-Day Forecast</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>2025-11-01</strong></td>
+                        <td>$128,701</td>
+                        <td>$8,946</td>
+                        <td>$49,703</td>
+                        <td><span class="badge badge-warning">Monitor</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>2025-10-31</strong></td>
+                        <td>$125,430</td>
+                        <td>$8,234</td>
+                        <td>$48,901</td>
+                        <td><span class="badge badge-success">Healthy</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>2025-10-30</strong></td>
+                        <td>$127,890</td>
+                        <td>$9,123</td>
+                        <td>$50,234</td>
+                        <td><span class="badge badge-warning">Monitor</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>2025-10-29</strong></td>
+                        <td>$123,456</td>
+                        <td>$7,890</td>
+                        <td>$47,890</td>
+                        <td><span class="badge badge-success">Healthy</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>2025-10-28</strong></td>
+                        <td>$129,870</td>
+                        <td>$9,456</td>
+                        <td>$51,234</td>
+                        <td><span class="badge badge-danger">Alert</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            <p>🕒 Last Updated: <span id="lastUpdate"></span></p>
+            <p>Automated Cash Flow Management System • Powered by n8n & Xero</p>
+            <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
+                Built by David Chigozie | Portfolio Project
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Update timestamp
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+        
+        // Add animation delays to cards
+        const cards = document.querySelectorAll('.metric-card');
+        cards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+        });
+    </script>
+</body>
+</html>
